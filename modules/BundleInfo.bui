@@ -1,0 +1,128 @@
+Public Function BundleInfoSupported() As Boolean
+    #If TargetMac Then
+        Return True
+    #Else
+        Return False
+    #End If
+End Function
+
+#If TargetMac Then
+    Private Declare Function NativeClass Lib "objc" Alias "objc_getClass" (name As String) As Ptr
+    Private Declare Function Allocate Lib "Foundation" Selector "alloc" (cls As Ptr) As Ptr
+    Private Declare Function InitObject Lib "Foundation" Selector "init" (object As Ptr) As Ptr
+    Private Declare Function NewPool Lib "Foundation" Selector "new" (cls As Ptr) As Ptr
+    Private Declare Sub DrainPool Lib "Foundation" Selector "drain" (pool As Ptr)
+    Private Declare Sub ReleaseObject Lib "CoreFoundation" Alias "CFRelease" (value As Ptr)
+    Private Function NativeText(value As Ptr) As String
+        If value = Nil Then Return ""
+        Return CType(CType(value, CFStringRef), String)
+    End Function
+    Private Declare Function MainBundle Lib "Foundation" Selector "mainBundle" (cls As Ptr) As Ptr
+    Private Declare Function BundleAtPath Lib "Foundation" Selector "bundleWithPath:" (cls As Ptr, filePath As Ptr) As Ptr
+    Private Declare Function BundleValue Lib "Foundation" Selector "objectForInfoDictionaryKey:" (bundle As Ptr, key As Ptr) As Ptr
+    Private Declare Function BundlePath Lib "Foundation" Selector "bundlePath" (bundle As Ptr) As Ptr
+    Private Declare Function BundleResource Lib "Foundation" Selector "pathForResource:ofType:" (bundle As Ptr, name As Ptr, fileExtension As Ptr) As Ptr
+    Private Declare Function IsString Lib "Foundation" Selector "isKindOfClass:" (object As Ptr, cls As Ptr) As UInt8
+    Private Function ReadBundleValue(bundle As Ptr, key As String) As String
+        Dim text As CFStringRef = CType(key, CFStringRef)
+        Try
+            Dim value As Ptr = BundleValue(bundle, text)
+            If value = Nil Then Return ""
+            If IsString(value, NativeClass("NSString")) = 0 Then Return ""
+            Return NativeText(value)
+        Finally
+            ReleaseObject(text)
+        End Try
+    End Function
+#End If
+
+Private Sub ValidateText(value As String, label As String)
+    If String.Trim(value) = "" Then Throw New InvalidArgumentException(label + " is required")
+    For Each character As String In String.Chars(value)
+        If String.Asc(character) = 0 Then Throw New InvalidArgumentException(label + " contains NUL")
+    Next
+End Sub
+
+Public Class BundleSnapshot
+    Private Property mPath As String = ""
+    Public Property Path As String
+        Get
+            Return Me.mPath
+        End Get
+    End Property
+    Private Property mIdentifier As String = ""
+    Public Property Identifier As String
+        Get
+            Return Me.mIdentifier
+        End Get
+    End Property
+    Private Property mName As String = ""
+    Public Property Name As String
+        Get
+            Return Me.mName
+        End Get
+    End Property
+    Private Property mVersion As String = ""
+    Public Property Version As String
+        Get
+            Return Me.mVersion
+        End Get
+    End Property
+    Private Property mBuild As String = ""
+    Public Property Build As String
+        Get
+            Return Me.mBuild
+        End Get
+    End Property
+    Public Sub Constructor(filePath As String = "")
+        #If TargetMac Then
+            Dim pool As Ptr = NewPool(NativeClass("NSAutoreleasePool"))
+            Dim text As CFStringRef = CType(filePath, CFStringRef)
+            Try
+                Dim bundle As Ptr = MainBundle(NativeClass("NSBundle"))
+                If filePath <> "" Then
+                    ValidateText(filePath, "Bundle path")
+                    bundle = BundleAtPath(NativeClass("NSBundle"), text)
+                End If
+                If bundle = Nil Then Throw New InvalidArgumentException("Bundle could not be opened")
+                Me.mPath = NativeText(BundlePath(bundle))
+                Me.mIdentifier = ReadBundleValue(bundle, "CFBundleIdentifier")
+                Me.mName = ReadBundleValue(bundle, "CFBundleDisplayName")
+                If Me.mName = "" Then Me.mName = ReadBundleValue(bundle, "CFBundleName")
+                Me.mVersion = ReadBundleValue(bundle, "CFBundleShortVersionString")
+                Me.mBuild = ReadBundleValue(bundle, "CFBundleVersion")
+            Finally
+                ReleaseObject(text)
+                DrainPool(pool)
+            End Try
+        #Else
+            Throw New UnsupportedOperationException("Bundle information requires macOS")
+        #End If
+    End Sub
+
+    Public Function Resource(name As String, fileExtension As String = "") As Optional Of FileSystemItem
+        ValidateText(name, "Resource name")
+        For Each part As String In [name, fileExtension]
+            If String.Contains(part, "/") Or String.Contains(part, "\\") Or part = ".." Then Throw New InvalidArgumentException("Resource names must not contain paths")
+        Next
+        #If TargetMac Then
+            Dim pool As Ptr = NewPool(NativeClass("NSAutoreleasePool"))
+            Dim pathText As CFStringRef = CType(Me.mPath, CFStringRef)
+            Dim nameText As CFStringRef = CType(name, CFStringRef)
+            Dim extText As CFStringRef = CType(fileExtension, CFStringRef)
+            Try
+                Dim bundle As Ptr = BundleAtPath(NativeClass("NSBundle"), pathText)
+                Dim filePath As String = NativeText(BundleResource(bundle, nameText, extText))
+                If filePath = "" Then Return None
+                Return Some(New FileSystemItem(filePath))
+            Finally
+                ReleaseObject(pathText)
+                ReleaseObject(nameText)
+                ReleaseObject(extText)
+                DrainPool(pool)
+            End Try
+        #Else
+            Throw New UnsupportedOperationException("Bundle resources require macOS")
+        #End If
+    End Function
+End Class
