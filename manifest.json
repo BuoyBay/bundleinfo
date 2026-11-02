@@ -2,7 +2,7 @@
     "schema": 1,
     "name": "bundleinfo",
     "version": "0.1.0",
-    "description": "Bundle identity, version, resource lookup",
+    "description": "Bundle identity and resources",
     "platforms": [
         "arm64-apple-macos",
         "x86_64-apple-macos",

@@ -1,4 +1,4 @@
-# Bundle identity, version, resource lookup
+# Bundle identity and resources
 
 See the [installation and complete usage example](resources/buoy-docs/getting-started.md) for an availability guard and optional resource lookup, or the [API reference](resources/buoy-docs/api.md) for metadata and error behavior.
 
