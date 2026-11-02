@@ -2,7 +2,7 @@
   "schema": 1,
   "name": "bundleinfo",
   "version": "0.1.0",
-  "description": "Read-only bundle identity, version and resource lookup",
+  "description": "Read application bundle identity and resources",
   "platforms": [
     "arm64-apple-macos",
     "x86_64-apple-macos",
