@@ -4,8 +4,6 @@ See the [installation and complete usage example](../resources/buoy-docs/getting
 
 `Import bundleinfo`. `New BundleSnapshot(bundlePath = "")` reads the main bundle or another bundle without loading executable code. Read-only `Path`, `Identifier`, `Name`, `Version`, and `Build`. `Resource(name, fileExtension = "")` returns `Optional Of FileSystemItem`; missing resources are None. Resource names cannot contain path separators. Snapshot strings are copied; no native object escapes the operation.
 
-These native operations require macOS; `BundleInfoSupported()` returns False on Windows/Linux, and unsupported operations throw rather than silently emulating an Apple API. All six compiler targets are checked; native execution is verified on macOS arm64.
-
-Maintainers run the private validation suite before release. See the repository README for public build instructions.
+These native operations require macOS. `BundleInfoSupported()` returns False on Windows/Linux, and unsupported operations throw.
 
 Inspired by [macoslib’s Cocoa examples](https://github.com/macoslib/macoslib); implemented independently against [Apple’s API](https://developer.apple.com/documentation/foundation/bundle).

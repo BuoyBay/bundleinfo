@@ -11,13 +11,13 @@ related: ["index.md", "api.md", "typed-api.md"]
 
 ## Install and import
 
-Copy the sealed `bundleinfo-0.1.0.buipkg` archive into your application's `packages/` folder. To build it from this repository, run `python3 tools/build_integrations.py bundleinfo`.
+Copy the sealed `bundleinfo-0.1.0.buipkg` archive into your application's `packages/` folder.
 
 ## First use
 
 Create a snapshot with no argument for the main bundle, or pass a bundle directory path. The operation does not load that bundle's executable. Read the copied properties, then call `Resource` for a simple resource name and optional extension. An absent resource returns `None`.
 
-```buoy
+```basic
 Import bundleinfo
 
 Sub Main()

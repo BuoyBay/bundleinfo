@@ -32,5 +32,4 @@ macOS is required. `BundleInfoSupported()` is false on Windows and Linux; constr
 - [Getting started](getting-started.md)
 - [API reference](api.md)
 
-
 [Full typed API: properties, parameters, defaults, and returns](typed-api.md)
